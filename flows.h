@@ -9,6 +9,7 @@ using namespace graphs;
 namespace flows
 {
 	const int INF = 1e9;
+	
 	class ford_fulkerson
 	{
 	private:
@@ -56,7 +57,6 @@ namespace flows
 	class edmonds_carp
 	{
 	private:
-		vector < int > mn;
 		graph g;
 		int source, sink, ans = 0;
 	public:
@@ -174,4 +174,60 @@ namespace flows
 			return ans;
 		}
 	};
-}
+	
+	class min_cost_max_flow
+	{
+	private:
+		graph g;
+		int source, sink = 0;
+		pair < int, int > ans = {0, 0};
+	public:
+		min_cost_max_flow (const graph &g, int source, int sink): g(g), source(source), sink(sink) {}
+		pair < int, int > evaluate ()
+		{
+			if (ans == make_pair(0, 0))
+			{
+				int tmp;
+				do
+				{
+					vector < int > dist(g.size(), INF), mn(g.size(), 0), p(g.size(), 0);
+					dist[source] = 0;
+					mn[source] = INF;
+					bool changed;
+					do
+					{
+						changed = false;
+						for (int v = 1; v < g.size(); ++v)
+						{
+							for (auto &it: g[v])
+							{
+								if (it.flow < it.capacity && dist[v]+it.cost < dist[it.to])
+								{
+									dist[it.to] = dist[v]+it.cost;
+									mn[it.to] = min(mn[v], it.capacity-it.flow);
+									p[it.to] = it.reverse;
+									changed = true;
+								}
+							}
+						}
+					} while (changed);
+					tmp = mn[sink];
+					if (tmp != 0)
+					{
+						int v = sink;
+						while (v != source)
+						{
+							g[v][p[v]].flow -= tmp;
+							auto edge = g[v][p[v]];
+							g[edge.to][edge.reverse].flow += tmp;
+							v = edge.to;
+						}
+						ans.first += tmp;
+						ans.second += dist[sink]*tmp;
+					}
+				} while (tmp != 0);
+			}
+			return ans;
+		}
+	};
+};
