@@ -85,13 +85,16 @@ namespace flows
 							}
 					}
 					tmp = mn[sink];
-					int v = sink;
-					while (v != source)
+					if (tmp != 0)
 					{
-						g[v][p[v]].flow -= tmp;
-						auto edge = g[v][p[v]];
-						g[edge.to][edge.reverse].flow += tmp;
-						v = edge.to;
+						int v = sink;
+						while (v != source)
+						{
+							g[v][p[v]].flow -= tmp;
+							auto edge = g[v][p[v]];
+							g[edge.to][edge.reverse].flow += tmp;
+							v = edge.to;
+						}
 					}
 					ans += tmp;
 				} while (tmp != 0);
@@ -224,6 +227,7 @@ namespace flows
 	class min_cost_max_flow_cycles_removal
 	{
 	private:
+		static const int N = 1e3;
 		graph g;
 		int source, sink = 0;
 		pair < int, int > ans = {0, 0};
@@ -255,13 +259,16 @@ namespace flows
 							}
 					}
 					tmp = mn[sink];
-					int v = sink;
-					while (v != source)
+					if (tmp != 0)
 					{
-						g[v][p[v]].flow -= tmp;
-						auto edge = g[v][p[v]];
-						g[edge.to][edge.reverse].flow += tmp;
-						v = edge.to;
+						int v = sink;
+						while (v != source)
+						{
+							g[v][p[v]].flow -= tmp;
+							auto edge = g[v][p[v]];
+							g[edge.to][edge.reverse].flow += tmp;
+							v = edge.to;
+						}
 					}
 					ans.first += tmp;
 					ans.second += dist[sink]*tmp;
@@ -293,21 +300,24 @@ namespace flows
 						int flow = INF;
 						int cost = 0;
 						int v = last;
+						bitset <N> vis;
 						do
 						{
 							auto edge = g[v][p[v]];
 							flow = min(flow, g[edge.to][edge.reverse].capacity-g[edge.to][edge.reverse].flow);
-							cost += g[edge.to][edge.reverse].cost;
+							vis[v] = true;
 							v = edge.to;
-						} while (v != last);
-						ans.second += cost*flow;
+						} while (!vis[v]);
+						last = v;
 						do
 						{
 							g[v][p[v]].flow -= flow;
 							auto edge = g[v][p[v]];
+							cost += g[edge.to][edge.reverse].cost;
 							g[edge.to][edge.reverse].flow += flow;
 							v = edge.to;
 						} while (v != last);
+						ans.second += cost*flow;
 					}
 				} while (changed);
 			}
