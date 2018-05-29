@@ -77,14 +77,12 @@ namespace flows
 						int v = que.front();
 						que.pop();
 						for (auto &it: g[v])
-						{
 							if (mn[it.to] == 0 && it.flow < it.capacity)
 							{
 								mn[it.to] = min(mn[v], it.capacity-it.flow);
 								p[it.to] = it.reverse;
 								que.push(it.to);
 							}
-						}
 					}
 					tmp = mn[sink];
 					int v = sink;
@@ -119,13 +117,11 @@ namespace flows
 				int v = que.front();
 				que.pop();
 				for (auto it: g[v])
-				{
 					if (d[it.to] == INF && it.flow < it.capacity)
 					{
 						d[it.to] = d[v]+1;
 						que.push(it.to);
 					}
-				}
 			}
 			return d[sink] != INF;
 		}
@@ -159,7 +155,6 @@ namespace flows
 		int evaluate ()
 		{
 			if (ans == 0)
-			{
 				while (bfs())
 				{
 					fill(p.begin(), p.end(), 0);
@@ -170,19 +165,18 @@ namespace flows
 						ans += tmp;
 					} while (tmp);
 				}
-			}
 			return ans;
 		}
 	};
 	
-	class min_cost_max_flow
+	class min_cost_max_flow_increasing_paths
 	{
 	private:
 		graph g;
 		int source, sink = 0;
 		pair < int, int > ans = {0, 0};
 	public:
-		min_cost_max_flow (const graph &g, int source, int sink): g(g), source(source), sink(sink) {}
+		min_cost_max_flow_increasing_paths (const graph &g, int source, int sink): g(g), source(source), sink(sink) {}
 		pair < int, int > evaluate ()
 		{
 			if (ans == make_pair(0, 0))
@@ -198,9 +192,7 @@ namespace flows
 					{
 						changed = false;
 						for (int v = 1; v < g.size(); ++v)
-						{
 							for (auto &it: g[v])
-							{
 								if (it.flow < it.capacity && dist[v]+it.cost < dist[it.to])
 								{
 									dist[it.to] = dist[v]+it.cost;
@@ -208,8 +200,6 @@ namespace flows
 									p[it.to] = it.reverse;
 									changed = true;
 								}
-							}
-						}
 					} while (changed);
 					tmp = mn[sink];
 					if (tmp != 0)
@@ -226,6 +216,100 @@ namespace flows
 						ans.second += dist[sink]*tmp;
 					}
 				} while (tmp != 0);
+			}
+			return ans;
+		}
+	};
+	
+	class min_cost_max_flow_cycles_removal
+	{
+	private:
+		graph g;
+		int source, sink = 0;
+		pair < int, int > ans = {0, 0};
+	public:
+		min_cost_max_flow_cycles_removal (const graph &g, int source, int sink): g(g), source(source), sink(sink) {}
+		pair < int, int > evaluate ()
+		{
+			if (ans.first == 0 && ans.second == 0)
+			{
+				int tmp;
+				do
+				{
+					vector < int > dist(g.size(), INF), mn(g.size(), 0), p(g.size(), 0);
+					dist[source] = 0;
+					mn[source] = INF;
+					queue < int > que;
+					que.push(source);
+					while (!que.empty())
+					{
+						int v = que.front();
+						que.pop();
+						for (auto &it: g[v])
+							if (mn[it.to] == 0 && it.flow < it.capacity)
+							{
+								dist[it.to] = dist[v]+it.cost;
+								mn[it.to] = min(mn[v], it.capacity-it.flow);
+								p[it.to] = it.reverse;
+								que.push(it.to);
+							}
+					}
+					tmp = mn[sink];
+					int v = sink;
+					while (v != source)
+					{
+						g[v][p[v]].flow -= tmp;
+						auto edge = g[v][p[v]];
+						g[edge.to][edge.reverse].flow += tmp;
+						v = edge.to;
+					}
+					ans.first += tmp;
+					ans.second += dist[sink]*tmp;
+				} while (tmp != 0);
+				// cerr << ans.second << endl;
+				bool changed = false;
+				do
+				{
+					int last;
+					vector < int > dist(g.size(), INF), mn(g.size(), 0), p(g.size(), 0);
+					for (int i = 1; i < g.size(); ++i)
+					{
+						dist[source] = 0;
+						mn[source] = INF;
+						changed = false;
+						for (int v = 1; v < g.size(); ++v)
+							for (auto &it: g[v])
+								if (it.flow < it.capacity && dist[v]+it.cost < dist[it.to])
+								{
+									dist[it.to] = dist[v]+it.cost;
+									mn[it.to] = min(mn[v], it.capacity-it.flow);
+									p[it.to] = it.reverse;
+									changed = true;
+									last = v;
+								}
+					}
+					if (changed)
+					{
+						int flow = INF;
+						int cost = 0;
+						int v = last;
+						do
+						{
+							auto edge = g[v][p[v]];
+							flow = min(flow, g[edge.to][edge.reverse].capacity-g[edge.to][edge.reverse].flow);
+							cost += g[edge.to][edge.reverse].cost;
+							v = edge.to;
+						} while (v != last);
+						ans.second += cost*flow;
+						do
+						{
+							g[v][p[v]].flow -= flow;
+							auto edge = g[v][p[v]];
+							g[edge.to][edge.reverse].flow += flow;
+							v = edge.to;
+						} while (v != last);
+					}
+				} while (changed);
 			}
 			return ans;
 		}

@@ -28,7 +28,10 @@ int main ()
 	dinic d(g, 1, n);
 	cout << d.evaluate() << endl;
 	
-	min_cost_max_flow mcmf(g, 1, n);
-	cout << mcmf.evaluate().first << ' ' << mcmf.evaluate().second << endl;
+	min_cost_max_flow_increasing_paths ip(g, 1, n);
+	cout << ip.evaluate().first << ' ' << ip.evaluate().second << endl;
+	
+	min_cost_max_flow_cycles_removal cr(g, 1, n);
+	cout << cr.evaluate().first << ' ' << cr.evaluate().second << endl;
 	return 0;
 }
